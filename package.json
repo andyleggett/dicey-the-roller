@@ -1,0 +1,28 @@
+{
+  "name": "dicey-theroller",
+  "version": "0.0.1",
+  "description": "A dice roller",
+  "scripts": {
+    "copy-static": "cpx \"static/**/\" dist/",
+    "gzip": "gzip -k9nr dist",
+    "build": "rollup -c && npm run copy-static",
+    "serve": "http-server dist -c0 -g",
+    "watch-js": "chokidar 'src/**/*.js' -c 'rollup -c'",
+    "watch-static": "chokidar 'static/**/*.*' -c 'npm run copy-static'",
+    "dev": "npm run copy-static && npm-run-all --parallel serve watch-js watch-static"
+  },
+  "author": "Andrew Leggett <me@andyleggett.co.uk>",
+  "dependencies": {},
+  "devDependencies": {
+    "chokidar": "^2.0.4",
+    "cpx": "^1.5.0",
+    "http-server": "^0.11.1",
+    "npm-run-all": "^4.1.3",
+    "rimraf": "^2.6.2",
+    "rollup": "^0.66.6",
+    "rollup-plugin-copy-assets": "^1.0.0",
+    "rollup-plugin-loadz0r": "^0.5.0",
+    "rollup-plugin-node-resolve": "^3.4.0",
+    "rollup-plugin-terser": "^3.0.0"
+  }
+}
