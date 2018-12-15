@@ -46,8 +46,8 @@ const operators = {
 }
 
 const projectModifier = (modifier) => {
-    
-    switch (modifier[0]){
+
+    switch (modifier[0]) {
 
         case 'k':
         case 'kh':
@@ -67,7 +67,7 @@ const projectModifier = (modifier) => {
             return {
                 action: 'dh',
                 number: (modifier[1].length === 0) ? 1 : parseInt(modifier[1][0], 10)
-            } 
+            }
 
         case 'dl':
             return {
@@ -88,14 +88,14 @@ const projectModifier = (modifier) => {
         case 'r':
             return {
                 action: 'r',
-                comparer: (modifier[1].length === 0) ? '=': modifier[1][0],
+                comparer: (modifier[1].length === 0) ? '=' : modifier[1][0],
                 number: (modifier[2].length === 0) ? 1 : parseInt(modifier[2][0], 10)
             }
 
         case 'ro':
             return {
                 action: 'ro',
-                comparer: (modifier[1].length === 0) ? '=': modifier[1][0],
+                comparer: (modifier[1].length === 0) ? '=' : modifier[1][0],
                 number: (modifier[2].length === 0) ? 1 : parseInt(modifier[2][0], 10)
             }
     }
@@ -105,17 +105,17 @@ const projectDie = (die) => {
 
     let number
 
-    if ('type' in die[0]){
+    if ('type' in die[0]) {
         number = merge({}, die[0])
     } else {
-         number = {
-             type: 'fixed',
-             number: die[0].length === 0 ? 1 : parseInt(die[0][0], 10)
-         }
+        number = {
+            type: 'fixed',
+            number: die[0].length === 0 ? 1 : parseInt(die[0][0], 10)
+        }
     }
 
     const diceType = parseInt(die[2], 10)
-    const modifiers = mapList(projectModifier, die[3]) 
+    const modifiers = mapList(projectModifier, die[3])
 
     return {
         type: 'die',
@@ -125,10 +125,17 @@ const projectDie = (die) => {
     }
 }
 
+const projectGroupPart = (group) => {
+    return {
+        type: 'group-part',
+        children: group
+    }
+}
+
 const projectGroup = (group) => {
     return {
         type: 'group',
-        group: group[1],
+        children: mapList(projectGroupPart, group[1]),
         modifiers: mapList(projectModifier, group[3])
     }
 }
@@ -145,7 +152,7 @@ const projectOperator = (op) => merge({
 
 const projectBracket = (br) => ({
     type: 'bracket',
-    bracket: br[1]
+    children: br[1]
 })
 
 const projectComma = (br) => ({

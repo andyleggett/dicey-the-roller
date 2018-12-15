@@ -220,15 +220,9 @@ const reverse = (xs) => {
 const flip = (f) => curry((a, b) => f(b, a))
 
 const flatten = (xs) => {
-    let idx = 0
-    let ys = []
-
-    while (idx < xs.length) {
-        ys[ys.length] = (is(Array, xs[idx]) === true) ? flatten(xs[idx]) : xs[idx]
-        idx += 1
-    }
-
-    return ys
+    return reduce((flat, toFlatten) => {
+        return concat(Array.isArray(toFlatten) ? flatten(toFlatten) : toFlatten, flat)
+      }, [], xs)
 }
 
 const head = (xs) => xs[0]
@@ -293,6 +287,8 @@ const unfold = (f, seed) => {
 const merge = curry((obj1, obj2) => Object.assign({}, obj1, obj2))
 
 const mergeAll = (objs) => reduce(merge, {}, objs)
+
+const concat = curry((xs, ys) => ys.concat(xs))
 
 const join = curry((sep, xs) => {
     let s = ''
@@ -372,6 +368,10 @@ const isBetween = curry((start, end, value) => (value >= start && value <= end))
 
 const replace = curry((search, replacement, value) => value.replace(search, replacement))
 
+const fst = (pair) => pair[0]
+
+const snd = (pair) => pair[1]
+
 const toPairs = (obj) => map((key) => [key, obj[key]], Object.keys(obj))
 
 const fromPairs = reduce((acc, item) => {
@@ -401,6 +401,7 @@ export {
     containsText,
     apply,
     flatten,
+    concat,
     head,
     tail,
     init,
@@ -425,6 +426,8 @@ export {
     pluralise,
     isBetween,
     replace,
+    fst,
+    snd,
     toPairs,
     fromPairs
 }

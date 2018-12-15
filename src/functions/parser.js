@@ -1,7 +1,8 @@
 import {
     flip,
     reduce,
-    flatten,
+    fst,
+    snd,
     head,
     tail,
     prepend,
@@ -9,9 +10,8 @@ import {
     curry,
     compose,
     apply,
-    map as listMap,
-    contains,
-    reject
+    map as mapList,
+    contains
 } from './funcy'
 
 import {
@@ -145,15 +145,19 @@ const skip = (parser1, parser2) => sequenceMap((_, y) => y, [parser1, parser2])
 
 const skipRight = (parser1, parser2) => sequenceMap((x, _) => x, [parser1, parser2])
 
-const skipMany = () => {}
-
 const between = (parser1, parser2, parser3) => sequenceMap((_, y, __) => y, [parser1, parser2, parser3])
 
-const sepBy1 = (match, sep) => compose(map(flatten), map(reject(isEmpty)))(andThen(match, many(skip(sep, match))))
+const log = (item) => {
+    console.log(item)
+    return item
+}
 
+const sepBy1 = (match, sep) => map((results) => {
+    return prepend(fst(results), snd(results))
+})(andThen(match, compose(many1, skip)(sep, match)))
+ 
 const sepBy = (match, sep) => Parser((input) => {
     const result = sepBy1(match, sep).action(input)
-    console.log(input, result)
     if (isSuccess(result) === true) {
         return result
     } else {
@@ -230,7 +234,7 @@ const satisfy = (pred) => Parser((input) => {
     }
 })
 
-const anyOf = (chars) => compose(choice, listMap(str))(chars)
+const anyOf = (chars) => compose(choice, mapList(str))(chars)
 
 const noneOf = (chars) => Parser((input) => {
 
@@ -278,7 +282,6 @@ export {
     lazy,
     skip,
     skipRight,
-    skipMany,
     ap,
     lift2,
     chain,
