@@ -154,7 +154,7 @@ const log = (item) => {
 
 const sepBy1 = (match, sep) => map((results) => {
     return prepend(fst(results), snd(results))
-})(andThen(match, compose(many1, skip)(sep, match)))
+})(andThen(match, compose(many, skip)(sep, match)))
  
 const sepBy = (match, sep) => Parser((input) => {
     const result = sepBy1(match, sep).action(input)
