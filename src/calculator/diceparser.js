@@ -5,7 +5,8 @@ import {
     str,
     regex,
     map,
-    between,
+    sepBy,
+    sepBy1,
     opt,
     lazy
 } from '../functions/parser'
@@ -127,7 +128,8 @@ const projectDie = (die) => {
 const projectGroup = (group) => {
     return {
         type: 'group',
-        group: group[1]
+        group: group[1],
+        modifiers: mapList(projectModifier, group[3])
     }
 }
 
@@ -157,9 +159,6 @@ const projectLabel = (label) => ({
 
 const digits = regex(/[0-9]+/)
 const chars = regex(/[a-zA-Z0-9]+/)
-const whitespace = regex(/\s+/)
-
-const betweenWhitespace = (parser) => between(opt(whitespace), parser, opt(whitespace))
 
 const keep = sequence([choice([str('kh'), str('kl'), str('k')]), opt(digits)])
 
@@ -175,17 +174,17 @@ const reroll = sequence([choice([str('ro'), str('r')]), opt(choice([str('<='), s
 
 const modifier = choice([keep, drop, success, reroll, sorted, critical])
 
-const label = compose(map(projectLabel), betweenWhitespace, sequence)([str('['), chars, str(']')])
+const label = compose(map(projectLabel), sequence)([str('['), chars, str(']')])
 
-const num = compose(map(projectNumber), betweenWhitespace)(digits)
+const num = map(projectNumber)(digits)
 
-const operator = compose(map(projectOperator), betweenWhitespace, choice)([str('+'), str('-'), str('*'), str('/'), str('^')])
+const operator = compose(map(projectOperator), choice)([str('+'), str('-'), str('*'), str('/'), str('^')])
 
-const bracket = lazy(() => compose(map(projectBracket), betweenWhitespace, sequence)([str('('), expression, str(')')]))
+const bracket = lazy(() => compose(map(projectBracket), sequence)([str('('), expression, str(')')]))
 
-const die = compose(map(projectDie), betweenWhitespace, sequence)([choice([label, opt(digits)]), str('d'), digits, many(modifier)])
+const die = compose(map(projectDie), sequence)([choice([label, opt(digits)]), str('d'), digits, many(modifier)])
 
-const group = lazy(() => compose(map(projectGroup), betweenWhitespace, sequence)([str('{'), sepBy(',', expression), str('}'), many(modifier)]))
+const group = lazy(() => compose(map(projectGroup), sequence)([str('{'), sepBy(expression, str(',')), str('}'), many(modifier)]))
 
 const expression = compose(many, choice)([group, die, num, operator, bracket, label])
 

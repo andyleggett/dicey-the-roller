@@ -10,7 +10,8 @@ import {
     compose,
     apply,
     map as listMap,
-    contains
+    contains,
+    reject
 } from './funcy'
 
 import {
@@ -148,11 +149,11 @@ const skipMany = () => {}
 
 const between = (parser1, parser2, parser3) => sequenceMap((_, y, __) => y, [parser1, parser2, parser3])
 
-const sepBy1 = (match, sep) => map(flatten)(andThen(match, many(skip(sep, match))))
+const sepBy1 = (match, sep) => compose(map(flatten), map(reject(isEmpty)))(andThen(match, many(skip(sep, match))))
 
 const sepBy = (match, sep) => Parser((input) => {
     const result = sepBy1(match, sep).action(input)
-
+    console.log(input, result)
     if (isSuccess(result) === true) {
         return result
     } else {

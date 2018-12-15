@@ -12,7 +12,7 @@ const RollerActor = {
       case 'roll':
         Actor.sendFromWorker('ui', {
             action: 'update-result',
-            arguments: calculateDice(message.arguments.dice)
+            arguments: calculateDice(message.arguments.dice.replace(/\s+/g, ''))
         })
         break
 
