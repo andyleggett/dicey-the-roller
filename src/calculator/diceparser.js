@@ -6,7 +6,7 @@ import {
     regex,
     map,
     sepBy,
-    sepBy1,
+    between,
     opt,
     lazy
 } from '../functions/parser'
@@ -103,16 +103,18 @@ const projectModifier = (modifier) => {
 
 const projectDie = (die) => {
 
-    let number
+    let number = die[0]
 
-    if ('type' in die[0]) {
+    console.log(die[0])
+
+   /* if ('type' in die[0]) {
         number = merge({}, die[0])
     } else {
         number = {
             type: 'fixed',
             number: die[0].length === 0 ? 1 : parseInt(die[0][0], 10)
         }
-    }
+    }*/
 
     const diceType = parseInt(die[2], 10)
     const modifiers = mapList(projectModifier, die[3])
@@ -183,15 +185,15 @@ const modifier = choice([keep, drop, success, reroll, sorted, critical])
 
 const label = compose(map(projectLabel), sequence)([str('['), chars, str(']')])
 
+const bracket = lazy(() => compose(map(projectBracket), sequence)([str('('), expression, str(')')]))
+
+const group = lazy(() => compose(map(projectGroup), sequence)([str('{'), sepBy(expression, str(',')), str('}'), many(modifier)]))
+
 const num = map(projectNumber)(digits)
 
 const operator = compose(map(projectOperator), choice)([str('+'), str('-'), str('*'), str('/'), str('^')])
 
-const bracket = lazy(() => compose(map(projectBracket), sequence)([str('('), expression, str(')')]))
-
-const die = compose(map(projectDie), sequence)([choice([label, opt(digits)]), str('d'), digits, many(modifier)])
-
-const group = lazy(() => compose(map(projectGroup), sequence)([str('{'), sepBy(expression, str(',')), str('}'), many(modifier)]))
+const die = compose(map(projectDie), sequence)([choice([bracket, label, opt(digits)]), str('d'), digits, many(modifier)])
 
 const expression = compose(many, choice)([group, die, num, operator, bracket, label])
 

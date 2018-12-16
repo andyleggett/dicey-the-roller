@@ -14,7 +14,8 @@ import {
     map,
     chain,
     get,
-    isLeft
+    isLeft,
+    Right
 } from '../functions/either'
 
 
@@ -47,35 +48,53 @@ const randomFromRange = (min, max) => min + Math.floor(Math.random() * (max - mi
 
 const produceRoll = die => n => n > die.number.number ? false : [randomFromRange(1, die.diceType), n + 1];
 
-const rollDice = (die) => {
+const rollDice = (labelvalues) => (die) => {
+
+    if (die.number.type === 'label'){
+        die.number.type = 'fixed'
+        die.number.number = labelvalues[die.number.name]
+        delete die.number.name
+    }
+
     const values = unfold(produceRoll(die), 1)
 
     die.values = values
     die.total = reduce(add, 0, values)
+
+    console.log(`Rolled die: ${die.values} = ${die.total}`)
 }
 
 export const calculateDice = (dicetext) => {
+
+    const labelValues = {
+        level: 8,
+        ac: 13
+    }
 
     const parsedDice = compose(fold, parse(expression))(dicetext)
 
     console.log(parsedDice.value)
 
-    visitDepth((node) => {
+    if (isLeft(parsedDice) === true){
+        return parsedDice
+    }
+
+    /*visitDepth((node) => {
         if (node.type === 'die') {
-            rollDice(node)
+            rollDice(labelValues)(node)
         }
     }, {
         type: 'root',
         children: parsedDice.value
-    })
+    })*/
 
 
     //const result = compose(get, map(calculate), chain(checkExpression), map(shunt), chain(matchBrackets))(rolledDice)
 
     //console.log(result)
 
-    return {
-        rolled: '', //compose(get, map(print))(rolledDice),
+    return Right({
+        rolled: '3 + 4 + 5', //compose(get, map(print))(rolledDice),
         result: 12
-    }
+    })
 }

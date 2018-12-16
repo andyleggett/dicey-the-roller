@@ -1,9 +1,14 @@
 import Actor from '../actorsystem/Actor'
 
+import {
+    isRight
+  } from '../functions/Either'
+
 let dice
 let roll
 let result
 let rolled
+let error
 
 const UIActor = {
   init() {
@@ -11,9 +16,12 @@ const UIActor = {
     roll = document.querySelector('#roll')
     result = document.querySelector('#result')
     rolled = document.querySelector('#rolled')
+    error = document.querySelector('#error')
 
     if (roll !== null){
         roll.addEventListener('click', () => {
+            error.innerText = ''
+            
             Actor.send('roller', {
                 action: 'roll',
                 arguments: {
@@ -27,12 +35,12 @@ const UIActor = {
 
     switch (message.action) {
       case 'update-result':
-        if (result !== null){
-            result.innerText = message.arguments.result
-        }
 
-        if (rolled !== null){
-            rolled.innerText = message.arguments.rolled
+        if (isRight(message.arguments)){    
+            result.innerText = message.arguments.value.result
+            rolled.innerText = message.arguments.value.rolled
+        } else {
+            error.innerText = message.arguments.value
         }
         
         break
