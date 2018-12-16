@@ -101,6 +101,15 @@ const projectModifier = (modifier) => {
     }
 }
 
+const projectComputed = (computed) => {
+    return {
+        type: 'computed',
+        first: computed[1],
+        operator: computed[2],
+        second: computed[3]
+    }
+}
+
 const projectDie = (die) => {
 
     let number = die[0]
@@ -185,15 +194,17 @@ const modifier = choice([keep, drop, success, reroll, sorted, critical])
 
 const label = compose(map(projectLabel), sequence)([str('['), chars, str(']')])
 
-const bracket = lazy(() => compose(map(projectBracket), sequence)([str('('), expression, str(')')]))
-
-const group = lazy(() => compose(map(projectGroup), sequence)([str('{'), sepBy(expression, str(',')), str('}'), many(modifier)]))
-
 const num = map(projectNumber)(digits)
 
 const operator = compose(map(projectOperator), choice)([str('+'), str('-'), str('*'), str('/'), str('^')])
 
-const die = compose(map(projectDie), sequence)([choice([bracket, label, opt(digits)]), str('d'), digits, many(modifier)])
+const bracket = lazy(() => compose(map(projectBracket), sequence)([str('('), expression, str(')')]))
+
+const computed = compose(map(projectComputed), sequence)([str('('), choice([num, label]), operator, choice([num, label]), str(')')])
+
+const group = lazy(() => compose(map(projectGroup), sequence)([str('{'), sepBy(expression, str(',')), str('}'), many(modifier)]))
+
+const die = compose(map(projectDie), sequence)([choice([computed, label, opt(digits)]), str('d'), digits, many(modifier)])
 
 const expression = compose(many, choice)([group, die, num, operator, bracket, label])
 
