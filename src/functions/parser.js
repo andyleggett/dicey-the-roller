@@ -11,7 +11,8 @@ import {
     compose,
     apply,
     map as mapList,
-    contains
+    contains,
+    forEach
 } from './funcy'
 
 import {

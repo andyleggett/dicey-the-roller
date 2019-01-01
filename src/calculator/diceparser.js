@@ -6,9 +6,9 @@ import {
     regex,
     map,
     sepBy,
-    between,
     opt,
-    lazy
+    lazy,
+    parse
 } from '../functions/parser'
 
 import {
@@ -45,34 +45,36 @@ const operators = {
     }
 }
 
+const entryOrOne = (lst) => (lst.length === 0) ? 1 : parseInt(lst[0], 10)
+
+const entryOrDefault = (lst, dft) => (lst.length === 0) ? dft : lst[0]
+
 const projectModifier = (modifier) => {
-
     switch (modifier[0]) {
-
         case 'k':
         case 'kh':
             return {
                 action: 'kh',
-                number: (modifier[1].length === 0) ? 1 : parseInt(modifier[1][0], 10)
+                number: entryOrOne(modifier[1])
             }
 
         case 'kl':
             return {
                 action: 'kl',
-                number: (modifier[1].length === 0) ? 1 : parseInt(modifier[1][0], 10)
+                number: entryOrOne(modifier[1])
             }
 
         case 'd':
         case 'dh':
             return {
                 action: 'dh',
-                number: (modifier[1].length === 0) ? 1 : parseInt(modifier[1][0], 10)
+                number: entryOrOne(modifier[1])
             }
 
         case 'dl':
             return {
                 action: 'dl',
-                number: (modifier[1].length === 0) ? 1 : parseInt(modifier[1][0], 10)
+                number: entryOrOne(modifier[1])
             }
 
         case '<=':
@@ -82,21 +84,21 @@ const projectModifier = (modifier) => {
         case '=':
             return {
                 action: modifier[0],
-                number: (modifier[1].length === 0) ? 1 : parseInt(modifier[1][0], 10)
+                number: entryOrOne(modifier[1])
             }
 
         case 'r':
             return {
                 action: 'r',
-                comparer: (modifier[1].length === 0) ? '=' : modifier[1][0],
-                number: (modifier[2].length === 0) ? 1 : parseInt(modifier[2][0], 10)
+                comparer: entryOrDefault(modifier[1], '='),
+                number: entryOrOne(modifier[2])
             }
 
         case 'ro':
             return {
                 action: 'ro',
-                comparer: (modifier[1].length === 0) ? '=' : modifier[1][0],
-                number: (modifier[2].length === 0) ? 1 : parseInt(modifier[2][0], 10)
+                comparer: entryOrDefault(modifier[1], '='),
+                number: entryOrOne(modifier[2])
             }
     }
 }
@@ -110,27 +112,14 @@ const projectComputed = (computed) => {
     }
 }
 
-const projectDie = (die) => {
-
-    let number = die[0]
-
-    console.log(die[0])
-
-   /* if ('type' in die[0]) {
-        number = merge({}, die[0])
-    } else {
-        number = {
-            type: 'fixed',
-            number: die[0].length === 0 ? 1 : parseInt(die[0][0], 10)
-        }
-    }*/
-
-    const diceType = parseInt(die[2], 10)
-    const modifiers = mapList(projectModifier, die[3])
+const projectDice = (dice) => {
+    const quantity = dice[0]
+    const diceType = parseInt(dice[2], 10)
+    const modifiers = mapList(projectModifier, dice[3])
 
     return {
-        type: 'die',
-        number,
+        type: 'dice',
+        quantity,
         diceType,
         modifiers
     }
@@ -156,18 +145,18 @@ const projectNumber = (num) => ({
     number: Number(num)
 })
 
+const projectDiceNumber = (num) => ({
+    type: 'dice-number',
+    number: num.length === 0 ? 1 : Number(num[0])
+})
+
 const projectOperator = (op) => merge({
     type: 'operator',
     operation: op
 }, operators[op])
 
 const projectBracket = (br) => ({
-    type: 'bracket',
-    children: br[1]
-})
-
-const projectComma = (br) => ({
-    type: 'comma'
+    type: (br === '(') ? 'left-bracket' : 'right-bracket'
 })
 
 const projectLabel = (label) => ({
@@ -176,6 +165,7 @@ const projectLabel = (label) => ({
 })
 
 const digits = regex(/[0-9]+/)
+
 const chars = regex(/[a-zA-Z0-9]+/)
 
 const keep = sequence([choice([str('kh'), str('kl'), str('k')]), opt(digits)])
@@ -196,18 +186,18 @@ const label = compose(map(projectLabel), sequence)([str('['), chars, str(']')])
 
 const num = map(projectNumber)(digits)
 
+const diceNum = map(projectDiceNumber)(digits)
+
 const operator = compose(map(projectOperator), choice)([str('+'), str('-'), str('*'), str('/'), str('^')])
 
-const bracket = lazy(() => compose(map(projectBracket), sequence)([str('('), expression, str(')')]))
+const bracket = compose(map(projectBracket), choice)([str('('), str(')')])
 
 const computed = compose(map(projectComputed), sequence)([str('('), choice([num, label]), operator, choice([num, label]), str(')')])
 
 const group = lazy(() => compose(map(projectGroup), sequence)([str('{'), sepBy(expression, str(',')), str('}'), many(modifier)]))
 
-const die = compose(map(projectDie), sequence)([choice([computed, label, opt(digits)]), str('d'), digits, many(modifier)])
+const dice = compose(map(projectDice), sequence)([choice([computed, label, opt(diceNum)]), str('d'), digits, many(modifier)])
 
-const expression = compose(many, choice)([group, die, num, operator, bracket, label])
+const expression = compose(many, choice)([group, dice, num, operator, bracket, label])
 
-export {
-    expression
-}
+export const diceParse = parse(expression)

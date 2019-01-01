@@ -1,22 +1,5 @@
-import {
-    shunt,
-    matchBrackets,
-    checkExpression
-} from './shuntingyard'
 
-import {
-    calculate,
-    //rollDice,
-    print
-} from './roller'
 
-import {
-    map,
-    chain,
-    get,
-    isLeft,
-    Right
-} from '../functions/either'
 
 
 import {
@@ -26,75 +9,52 @@ import {
     reduce
 } from '../functions/funcy'
 
-import {
-    parse,
-    fold
-} from '../functions/parser'
-
-import {
-    expression
-} from './diceparser'
-
-const visitDepth = (fn, tree, level = 0) => {
-    fn(tree, level)
-    if (tree.children && tree.children.length > 0) {
-        forEach((child) => visitDepth(fn, child, level + 1), tree.children)
-    }
-}
-
 const add = (a, b) => a + b
 
 const randomFromRange = (min, max) => min + Math.floor(Math.random() * (max - min + 1))
 
-const produceRoll = die => n => n > die.number.number ? false : [randomFromRange(1, die.diceType), n + 1];
+const produceRoll = (num, type) => n => n > num ? false : [randomFromRange(1, type), n + 1];
 
-const rollDice = (labelvalues) => (die) => {
+const calculateDice = (dice) => {
+    const quantity = dice.quantity[0]
+    const diceType = dice.diceType
 
-    if (die.number.type === 'label'){
-        die.number.type = 'fixed'
-        die.number.number = labelvalues[die.number.name]
-        delete die.number.name
+    switch(quantity.type){
+        case 'dice-number':
+            const values = unfold(produceRoll(quantity.number, diceType), 1) //TODO: later - move to rolling step and use value here instead
+            console.log(values)
+            const total = reduce(add, 0, values)
+            console.log(total)
+            return total
     }
-
-    const values = unfold(produceRoll(die), 1)
-
-    die.values = values
-    die.total = reduce(add, 0, values)
-
-    console.log(`Rolled die: ${die.values} = ${die.total}`)
 }
 
-export const calculateDice = (dicetext) => {
 
-    const labelValues = {
-        level: 8,
-        ac: 13
-    }
+export const evaluate = (node) => {
+	if (node.token.type === 'operator') {
+        switch(node.token.operation){
+            case '^': 
+                return Math.pow(evaluate(node.left), evaluate(node.right))
 
-    const parsedDice = compose(fold, parse(expression))(dicetext)
+            case '+': 
+                return evaluate(node.left) + evaluate(node.right)
 
-    console.log(parsedDice.value)
+            case '-': 
+                return evaluate(node.left) - evaluate(node.right)
 
-    if (isLeft(parsedDice) === true){
-        return parsedDice
-    }
+            case '*': 
+                return evaluate(node.left) * evaluate(node.right)
 
-    /*visitDepth((node) => {
-        if (node.type === 'die') {
-            rollDice(labelValues)(node)
+            case '/': 
+                return evaluate(node.left) / evaluate(node.right)
         }
-    }, {
-        type: 'root',
-        children: parsedDice.value
-    })*/
-
-
-    //const result = compose(get, map(calculate), chain(checkExpression), map(shunt), chain(matchBrackets))(rolledDice)
-
-    //console.log(result)
-
-    return Right({
-        rolled: '3 + 4 + 5', //compose(get, map(print))(rolledDice),
-        result: 12
-    })
+	} else {
+        switch(node.token.type){
+            case 'number':
+                return node.token.number
+            case 'dice':
+                return calculateDice(node.token)
+        }
+		 
+	}
 }
