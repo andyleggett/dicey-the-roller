@@ -9,8 +9,12 @@ import {
 } from '../calculator/ast'
 
 import {
-  evaluate
+  createEvaluator
 } from '../calculator/calculator'
+
+const labels = {
+  level: 12
+}
 
 const RollerActor = {
   init() {
@@ -23,7 +27,10 @@ const RollerActor = {
         console.time('roll')
         const ast = toAST(diceParse(message.arguments.dice.replace(/\s+/g, '')).value)
         //console.log(ast)
-        console.log(evaluate(ast))
+
+        const evaluator = createEvaluator(labels)
+
+        console.log(evaluator(ast))
         console.timeEnd('roll')
         console.log('-----------------')
         
